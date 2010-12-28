@@ -27,9 +27,14 @@ gem 'autotest'
 # put test-only gems in this group so their generators
 # and rake tasks are available in development mode:
 
-group :development,:test do
-   gem 'rspec-rails', '2.3.0'
-   gem 'rspec', '2.3.0'
-   gem 'webrat', '0.7.1'
 
+group :development, :test do
+  gem 'rspec-rails', '2.3.0'
+  gem 'annotate-models', '1.0.4'
+
+end
+
+group :test do
+  gem 'rspec', '2.3.0'
+  gem 'webrat', '0.7.1'
 end

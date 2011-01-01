@@ -42,7 +42,7 @@ class User < ActiveRecord::Base
     user = find_by_id(id)
     (user && user.salt == cookie_salt) ? user : nil
   end
-  
+
   private
   def encrypt_password
     self.salt = make_salt if new_record?

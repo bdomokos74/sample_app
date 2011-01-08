@@ -150,8 +150,8 @@ describe User do
   describe "micropost associations" do
     before(:each) do
       @user = User.create(@attr)
-      @mp1 = Factory(:micropost, :user => @user, :created_at => 1.day.ago)
-      @mp2 = Factory(:micropost, :user => @user, :created_at => 1.hour.ago)
+      @mp1  = Factory(:micropost, :user => @user, :created_at => 1.day.ago)
+      @mp2  = Factory(:micropost, :user => @user, :created_at => 1.hour.ago)
     end
 
     it "should have a microposts attribute" do
@@ -168,20 +168,95 @@ describe User do
       Micropost.find_by_id(@mp2.id).should be_nil
     end
 
-    it "should have a feed" do
-      @user.should respond_to(:feed)
+    describe "status feed" do
+      it "should have a feed" do
+        @user.should respond_to(:feed)
+      end
+
+      it "should include the user's microposts" do
+        @user.feed.should include(@mp1)
+        @user.feed.should include(@mp2)
+      end
+
+      it "should not include other user's microposts" do
+        mp3 = Factory(:micropost,
+                      :user => Factory(:user, :email => Factory.next(:email)))
+        @user.feed.should_not include(mp3)
+      end
+
+      it "should include the microposts of followed users" do
+        followed = Factory(:user, :email => Factory.next(:email))
+        mp3 = Factory(:micropost, :user => followed)
+        @user.follow!(followed)
+        @user.feed.should include(mp3)
+      end
+    end
+  end
+
+  describe "relationships" do
+    before(:each) do
+      @user     = User.create!(@attr)
+      @followed = Factory(:user)
     end
 
-    it "should include the user's microposts" do
-      @user.feed.include?(@mp1).should be_true
-      @user.feed.include?(@mp2).should be_true
+    it "should have a relationships method" do
+      @user.should respond_to(:relationships)
     end
 
-    it "should not include other user's microposts" do
-      mp3 = Factory(:micropost,
-                     :user => Factory(:user, :email => Factory.next(:email)))
-      @user.feed.include?(mp3).should be_false
-      
+    it "should have a following method" do
+      @user.should respond_to(:following)
+    end
+
+    describe "follow!" do
+      it "should respond to follow!" do
+        @user.should respond_to(:follow!)
+      end
+
+      it "should add a relationship" do
+        @user.follow!(@followed)
+        @user.following.should include(@followed)
+      end
+    end
+
+    describe "following?" do
+      it "should respond to following?" do
+        @user.should respond_to(:following?)
+      end
+
+      it "should not follow anybody by default" do
+        @user.following?(@followed).should be_false
+      end
+
+      it "should return true for a followed user" do
+        @user.relationships.create!(:followed_id => @followed.id)
+        @user.following?(@followed).should be_true
+      end
+    end
+
+    describe "unfollow!" do
+      it "should respond to unfollow!" do
+        @user.should respond_to(:unfollow!)
+      end
+
+      it "should not follow a user after unfollow!" do
+        @user.follow!(@followed)
+        @user.unfollow!(@followed)
+        @user.should_not be_following(@followed)
+      end
+    end
+
+    it "should have a reverse_relationships method" do
+      @user.should respond_to(:reverse_relationships)
+    end
+
+    it "should have a followers method" do
+      @user.should respond_to(:followers)
+    end
+
+    it "should include a follower in the followers array" do
+      @user.follow!(@followed)
+      @followed.followers.should include(@user)
     end
   end
 end
+
